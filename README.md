@@ -63,9 +63,43 @@ npm run start:dev
 # unit tests
 $ npm run test
 
-# e2e tests
+# e2e tests (nota: requerem --experimental-vm-modules do Node.js)
+# Recomenda-se executar testes e2e manualmente testando os endpoints HTTP
 $ npm run test:e2e
 
 # test coverage
 $ npm run test:cov
 ```
+
+## API Documentation
+
+Quando a aplicação estiver rodando, acesse a documentação Swagger em:
+- http://localhost:3000/api
+
+## Endpoints Disponíveis
+
+### Autenticação
+- `POST /auth/register` - Registrar novo usuário
+- `POST /auth/login` - Login (retorna JWT token)
+- `GET /auth/profile` - Obter perfil do usuário autenticado (requer Bearer token)
+
+### Pagamentos
+- `POST /payments` - Processar venda com cálculo de taxas e comissões
+
+### Usuários de Teste (senha: `password123`)
+- `producer@test.com` - Produtor
+- `affiliate@test.com` - Afiliado
+- `coproducer@test.com` - Coprodutor
+- `platform@test.com` - Plataforma
+
+## Notas Técnicas
+
+### Prisma Client
+O projeto usa um output customizado para o Prisma Client em `generated/prisma/`. Após qualquer alteração no schema:
+
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+No Docker, isso é feito automaticamente no entrypoint.
