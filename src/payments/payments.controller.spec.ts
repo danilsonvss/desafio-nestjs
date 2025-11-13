@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
 import { PrismaService } from '../database/prisma.service';
+import { CardGatewayService } from './card-gateway.service';
 
 describe('PaymentsController', () => {
   let controller: PaymentsController;
@@ -20,6 +21,13 @@ describe('PaymentsController', () => {
               user: { findFirst: jest.fn() },
               $transaction: jest.fn(),
             },
+          },
+        },
+        {
+          provide: CardGatewayService,
+          useValue: {
+            processPayment: jest.fn(),
+            maskCardNumber: jest.fn(),
           },
         },
       ],

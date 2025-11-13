@@ -107,6 +107,12 @@ describe('Payments (e2e)', () => {
         amount: 100,
         country: 'BR',
         producerId: producer.id,
+        cardNumber: '4111111111111111',
+        cardHolderName: 'JOHN DOE',
+        expiryMonth: '12',
+        expiryYear: '2025',
+        cvv: '123',
+        installments: 1,
       })
       .expect(201);
 
@@ -115,6 +121,14 @@ describe('Payments (e2e)', () => {
     expect(response.body.taxAmount).toBe(22); // 20% + R$2 fixed
     expect(response.body.netAmount).toBe(78);
     expect(response.body.commissions).toHaveLength(2);
+
+    // Verify payment info
+    expect(response.body.payment).toMatchObject({
+      approved: true,
+      cardBrand: 'VISA',
+      last4Digits: '1111',
+      installments: 1,
+    });
 
     // Verify balances were updated
     const updatedProducer = await prisma.db.balance.findUnique({
@@ -131,6 +145,12 @@ describe('Payments (e2e)', () => {
         country: 'US',
         producerId: producer.id,
         affiliateId: affiliate.id,
+        cardNumber: '5555555555554444',
+        cardHolderName: 'JANE DOE',
+        expiryMonth: '06',
+        expiryYear: '2026',
+        cvv: '456',
+        installments: 1,
       })
       .expect(201);
 
@@ -139,6 +159,13 @@ describe('Payments (e2e)', () => {
     expect(response.body.taxAmount).toBe(31.5); // 15% + $1.50 fixed
     expect(response.body.netAmount).toBe(168.5);
     expect(response.body.commissions).toHaveLength(3); // producer, affiliate, platform
+
+    // Verify Mastercard payment
+    expect(response.body.payment).toMatchObject({
+      approved: true,
+      cardBrand: 'MASTERCARD',
+      last4Digits: '4444',
+    });
 
     // Verify affiliate balance was updated
     const updatedAffiliate = await prisma.db.balance.findUnique({
@@ -156,12 +183,21 @@ describe('Payments (e2e)', () => {
         producerId: producer.id,
         affiliateId: affiliate.id,
         coproducerId: coproducer.id,
+        cardNumber: '4111111111111111',
+        cardHolderName: 'JOHN DOE',
+        expiryMonth: '12',
+        expiryYear: '2025',
+        cvv: '123',
+        installments: 3,
       })
       .expect(201);
 
     expect(response.body).toHaveProperty('transactionId');
     expect(response.body.grossAmount).toBe(500);
     expect(response.body.commissions).toHaveLength(4); // all participants
+
+    // Verify payment with installments
+    expect(response.body.payment.installments).toBe(3);
 
     // Verify all balances were updated
     const balances = await prisma.db.balance.findMany({
@@ -184,8 +220,65 @@ describe('Payments (e2e)', () => {
         amount: 100,
         country: 'UNKNOWN',
         producerId: producer.id,
+        cardNumber: '4111111111111111',
+        cardHolderName: 'JOHN DOE',
+        expiryMonth: '12',
+        expiryYear: '2025',
+        cvv: '123',
+        installments: 1,
       })
       .expect(500);
+  });
+
+  it('should reject invalid card number', async () => {
+    await request(app.getHttpServer())
+      .post('/payments')
+      .send({
+        amount: 100,
+        country: 'BR',
+        producerId: producer.id,
+        cardNumber: '4111111111111112', // Invalid Luhn
+        cardHolderName: 'JOHN DOE',
+        expiryMonth: '12',
+        expiryYear: '2025',
+        cvv: '123',
+        installments: 1,
+      })
+      .expect(400);
+  });
+
+  it('should reject expired card', async () => {
+    await request(app.getHttpServer())
+      .post('/payments')
+      .send({
+        amount: 100,
+        country: 'BR',
+        producerId: producer.id,
+        cardNumber: '4111111111111111',
+        cardHolderName: 'JOHN DOE',
+        expiryMonth: '01',
+        expiryYear: '2020',
+        cvv: '123',
+        installments: 1,
+      })
+      .expect(400);
+  });
+
+  it('should simulate insufficient funds', async () => {
+    await request(app.getHttpServer())
+      .post('/payments')
+      .send({
+        amount: 100,
+        country: 'BR',
+        producerId: producer.id,
+        cardNumber: '4111111111110001',
+        cardHolderName: 'JOHN DOE',
+        expiryMonth: '12',
+        expiryYear: '2025',
+        cvv: '123',
+        installments: 1,
+      })
+      .expect(400);
   });
 
   it('should create transaction and commission records', async () => {
@@ -195,6 +288,12 @@ describe('Payments (e2e)', () => {
         amount: 300,
         country: 'US',
         producerId: producer.id,
+        cardNumber: '4111111111111111',
+        cardHolderName: 'JOHN DOE',
+        expiryMonth: '12',
+        expiryYear: '2025',
+        cvv: '123',
+        installments: 1,
       })
       .expect(201);
 

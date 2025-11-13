@@ -100,8 +100,60 @@ Quando a aplicação estiver rodando, acesse a documentação Swagger em:
 - `PUT /taxes/:id` - Atualizar configuração de taxa 🔒🛡️
 - `DELETE /taxes/:id` - Remover configuração de taxa 🔒🛡️
 
-### Pagamentos
-- `POST /payments` - Processar venda com cálculo de taxas e comissões
+### Pagamentos 🔒
+- `POST /payments` - Processar venda com simulação de cartão de crédito
+
+**Campos obrigatórios para pagamento:**
+```json
+{
+  "amount": 100.00,
+  "country": "BR",
+  "producerId": "uuid-do-produtor",
+  "affiliateId": "uuid-do-afiliado (opcional)",
+  "coproducerId": "uuid-do-coprodutor (opcional)",
+  "cardNumber": "4111111111111111",
+  "cardHolderName": "JOHN DOE",
+  "expiryMonth": "12",
+  "expiryYear": "2025",
+  "cvv": "123",
+  "installments": 1
+}
+```
+
+**Cartões de teste aceitos:**
+- Visa: `4111111111111111`
+- Mastercard: `5555555555554444`
+- Amex: `378282246310005`
+
+**Validações implementadas:**
+- ✅ Algoritmo de Luhn (validação do número do cartão)
+- ✅ Data de expiração (cartão não pode estar vencido)
+- ✅ CVV (3-4 dígitos)
+- ✅ Parcelas (1-12)
+- ✅ Detecção automática da bandeira do cartão
+
+**Resposta do pagamento:**
+```json
+{
+  "transactionId": "uuid-da-transacao",
+  "grossAmount": 100.00,
+  "taxAmount": 6.89,
+  "netAmount": 93.11,
+  "commissions": [
+    { "type": "PRODUCER", "amount": 65.17 },
+    { "type": "PLATFORM", "amount": 4.66 },
+    { "type": "AFFILIATE", "amount": 9.31 },
+    { "type": "COPRODUCER", "amount": 13.97 }
+  ],
+  "payment": {
+    "approved": true,
+    "authorizationCode": "ABC123",
+    "cardBrand": "VISA",
+    "last4Digits": "1111",
+    "installments": 1
+  }
+}
+```
 
 **Legenda:**
 - 🔒 = Requer autenticação (Bearer token)
@@ -114,6 +166,29 @@ Quando a aplicação estiver rodando, acesse a documentação Swagger em:
 - `platform@test.com` - Plataforma (role: PLATFORM) - **Acesso administrativo**
 
 ## Notas Técnicas
+
+### Simulação de Gateway de Pagamento
+O sistema implementa um gateway de pagamento simulado que:
+- **NÃO armazena** dados do cartão (número, CVV)
+- Valida cartões usando o algoritmo de Luhn
+- Detecta automaticamente a bandeira (Visa, Mastercard, Amex, Elo, Hipercard)
+- Simula processamento com delay de 100ms
+- Gera códigos de autorização mock
+- Suporta múltiplas bandeiras de cartão brasileiro
+
+**Segurança PCI/LGPD:**
+- Dados sensíveis do cartão são validados mas **nunca persistidos**
+- Apenas os últimos 4 dígitos são retornados na resposta
+- Senhas de usuários são hasheadas com bcrypt (10 rounds)
+- Valores monetários armazenados como Decimal no banco
+
+### Regras de Negócio Implementadas
+Consulte o arquivo `docs/business-rules.md` para documentação completa das regras de negócio, incluindo:
+- Fluxo completo de processamento de vendas
+- Cálculo de taxas por país
+- Distribuição de comissões
+- Validações e controles de acesso
+- Exemplos práticos com valores reais
 
 ### Prisma Client
 O projeto usa um output customizado para o Prisma Client em `generated/prisma/`. Após qualquer alteração no schema:

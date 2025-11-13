@@ -1,15 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
 import { ProcessSaleDto } from './dto/process-sale.dto';
+import { CardGatewayService } from './card-gateway.service';
 
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cardGateway: CardGatewayService,
+  ) {}
 
   async processSale(dto: ProcessSaleDto) {
-    const { amount, country, producerId, affiliateId, coproducerId } = dto;
+    const {
+      amount,
+      country,
+      producerId,
+      affiliateId,
+      coproducerId,
+      cardNumber,
+      cardHolderName,
+      expiryMonth,
+      expiryYear,
+      cvv,
+      installments,
+    } = dto;
 
-    // Get tax config for country
+    // Step 1: Process card payment (simulation)
+    const paymentResult = await this.cardGateway.processPayment({
+      cardNumber,
+      cardHolderName,
+      expiryMonth,
+      expiryYear,
+      cvv,
+      amount,
+      installments,
+    });
+
+    // Step 2: Get tax config for country
     const taxConfig = await this.prisma.db.taxConfig.findUnique({
       where: { country },
     });
@@ -18,13 +45,13 @@ export class PaymentsService {
       throw new Error(`Tax configuration not found for country: ${country}`);
     }
 
-    // Calculate tax
+    // Step 3: Calculate tax
     const taxRate = Number(taxConfig.rate);
     const fixedFee = Number(taxConfig.fixedFee || 0);
     const taxAmount = amount * taxRate + fixedFee;
     const netAmount = amount - taxAmount;
 
-    // Simple commission split (can be made configurable)
+    // Step 4: Calculate commissions (simple commission split)
     const platformCommission = netAmount * 0.05; // 5% platform fee
     const remainingAmount = netAmount - platformCommission;
 
@@ -33,7 +60,7 @@ export class PaymentsService {
     let coproducerAmount = 0;
 
     if (affiliateId) {
-      affiliateAmount = remainingAmount * 0.10; // 10% to affiliate
+      affiliateAmount = remainingAmount * 0.1; // 10% to affiliate
       producerAmount -= affiliateAmount;
     }
 
@@ -42,7 +69,7 @@ export class PaymentsService {
       producerAmount -= coproducerAmount;
     }
 
-    // Get platform user
+    // Step 5: Get platform user
     const platform = await this.prisma.db.user.findFirst({
       where: { role: 'PLATFORM' },
     });
@@ -51,7 +78,7 @@ export class PaymentsService {
       throw new Error('Platform user not found');
     }
 
-    // Create transaction with commissions and update balances atomically
+    // Step 6: Create transaction with commissions and update balances atomically
     const result = await this.prisma.db.$transaction(async (tx) => {
       // Create transaction
       const transaction = await tx.transaction.create({
@@ -133,6 +160,13 @@ export class PaymentsService {
         type: c.type,
         amount: Number(c.amount),
       })),
+      payment: {
+        approved: paymentResult.approved,
+        authorizationCode: paymentResult.authorizationCode,
+        cardBrand: paymentResult.cardBrand,
+        last4Digits: paymentResult.last4Digits,
+        installments,
+      },
     };
   }
 }
