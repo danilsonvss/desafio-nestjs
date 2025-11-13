@@ -83,8 +83,27 @@ Quando a aplicação estiver rodando, acesse a documentação Swagger em:
 - `POST /auth/login` - Login (retorna JWT token)
 - `GET /auth/profile` - Obter perfil do usuário autenticado (requer Bearer token)
 
+### Usuários 🔒
+- `GET /users` - Listar todos os usuários com saldos
+- `GET /users/:id` - Obter detalhes do usuário com comissões recentes
+
+### Saldos (Balances) 🔒
+- `GET /balances` - Listar todos os saldos ordenados por valor
+- `GET /balances/me` - Obter saldo do usuário autenticado
+- `GET /balances/user/:userId` - Obter saldo por ID do usuário
+
+### Taxas (Taxes)
+- `GET /taxes` - Listar todas as configurações de taxas (público)
+- `GET /taxes/country/:country` - Obter taxa por código do país (público)
+- `GET /taxes/:id` - Obter taxa por ID (público)
+- `POST /taxes` - Criar configuração de taxa 🔒
+- `PUT /taxes/:id` - Atualizar configuração de taxa 🔒
+- `DELETE /taxes/:id` - Remover configuração de taxa 🔒
+
 ### Pagamentos
 - `POST /payments` - Processar venda com cálculo de taxas e comissões
+
+🔒 = Requer autenticação (Bearer token)
 
 ### Usuários de Teste (senha: `password123`)
 - `producer@test.com` - Produtor
