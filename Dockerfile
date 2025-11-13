@@ -19,5 +19,6 @@ EXPOSE 3000
 
 # Entrypoint will wait for DB, generate client, sync schema, then start
 COPY docker/entrypoint.dev.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY docker/watch-prisma-pkg.sh /watch-prisma-pkg.sh
+RUN chmod +x /entrypoint.sh /watch-prisma-pkg.sh
 ENTRYPOINT ["/entrypoint.sh"]
