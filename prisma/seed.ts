@@ -1,12 +1,7 @@
 async function getPrismaClient() {
-  try {
-    // @ts-ignore - dynamic import path may not exist until generated
-    const mod = await import('../generated/prisma');
-    return new mod.PrismaClient();
-  } catch {
-    const mod = await import('@prisma/client');
-    return new mod.PrismaClient();
-  }
+  // @ts-ignore - dynamic import path may not exist until generated
+  const mod = await import('../generated/prisma/client.js');
+  return new mod.PrismaClient();
 }
 
 async function hashPassword(password: string): Promise<string> {

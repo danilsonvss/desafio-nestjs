@@ -1,4 +1,5 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { createPrismaClient } from './prisma-client.factory.js';
 
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
@@ -9,12 +10,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit() {
-    // Lazy-load Prisma client to avoid build-time dependency on generated path
-    const mod =
-      // @ts-ignore - dynamic import path resolved at runtime
-      (await import('generated/prisma').catch(() => null)) ||
-      (await import('@prisma/client'));
-    this.client = new (mod as any).PrismaClient();
+    this.client = await createPrismaClient();
     await this.client.$connect();
   }
 
