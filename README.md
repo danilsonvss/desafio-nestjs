@@ -117,8 +117,6 @@ Aplicação rodará em: http://localhost:3000
 
 ## 🧪 Testes
 
-## 🧪 Testes
-
 ```bash
 # testes unitários (40 testes)
 npm run test
