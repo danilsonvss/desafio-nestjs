@@ -99,10 +99,10 @@ describe('PaymentsService', () => {
         amount: 100,
         country: 'BR',
         commissions: [
-          { type: 'PRODUCER', amount: 65.17 },
-          { type: 'PLATFORM', amount: 4.66 },
-          { type: 'AFFILIATE', amount: 9.31 },
-          { type: 'COPRODUCER', amount: 13.97 },
+          { type: 'PRODUCER', amount: 66.3375 },
+          { type: 'PLATFORM', amount: 11.55 }, // Tax (6.89) + commission (4.66)
+          { type: 'AFFILIATE', amount: 8.845 },
+          { type: 'COPRODUCER', amount: 13.2675 },
         ],
       });
 

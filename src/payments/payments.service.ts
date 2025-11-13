@@ -53,6 +53,7 @@ export class PaymentsService {
 
     // Step 4: Calculate commissions (simple commission split)
     const platformCommission = netAmount * 0.05; // 5% platform fee
+    const platformTotal = taxAmount + platformCommission; // Tax + commission
     const remainingAmount = netAmount - platformCommission;
 
     let producerAmount = remainingAmount;
@@ -95,7 +96,7 @@ export class PaymentsService {
               {
                 userId: platform.id,
                 type: 'PLATFORM',
-                amount: platformCommission,
+                amount: platformTotal, // Tax + commission
               },
               ...(affiliateId
                 ? [
@@ -131,7 +132,7 @@ export class PaymentsService {
 
       await tx.balance.update({
         where: { userId: platform.id },
-        data: { amount: { increment: platformCommission } },
+        data: { amount: { increment: platformTotal } }, // Tax + commission
       });
 
       if (affiliateId) {

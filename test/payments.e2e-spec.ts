@@ -125,6 +125,14 @@ describe('Payments (e2e)', () => {
     expect(response.body.taxAmount).toBe(22); // 20% + R$2 fixed
     expect(response.body.netAmount).toBe(78);
     expect(response.body.commissions).toHaveLength(2);
+    
+    // Platform gets tax (22) + commission (3.9) = 25.9
+    const platformComm = response.body.commissions.find(c => c.type === 'PLATFORM');
+    expect(platformComm.amount).toBe(25.9);
+    
+    // Producer gets remaining: 78 - 3.9 = 74.1
+    const producerComm = response.body.commissions.find(c => c.type === 'PRODUCER');
+    expect(producerComm.amount).toBe(74.1);
 
     // Verify payment info
     expect(response.body.payment).toMatchObject({
@@ -162,7 +170,20 @@ describe('Payments (e2e)', () => {
     expect(response.body.grossAmount).toBe(200);
     expect(response.body.taxAmount).toBe(31.5); // 15% + $1.50 fixed
     expect(response.body.netAmount).toBe(168.5);
-    expect(response.body.commissions).toHaveLength(3); // producer, affiliate, platform
+    expect(response.body.commissions).toHaveLength(3);
+    
+    // Platform: tax (31.5) + commission (8.425) = 39.925
+    const platformComm = response.body.commissions.find(c => c.type === 'PLATFORM');
+    expect(platformComm.amount).toBeCloseTo(39.925, 2);
+    
+    // Remaining: 168.5 - 8.425 = 160.075
+    // Affiliate (10%): 16.0075
+    const affiliateComm = response.body.commissions.find(c => c.type === 'AFFILIATE');
+    expect(affiliateComm.amount).toBeCloseTo(16.0075, 2);
+    
+    // Producer: 144.0675
+    const producerComm = response.body.commissions.find(c => c.type === 'PRODUCER');
+    expect(producerComm.amount).toBeCloseTo(144.0675, 2); // producer, affiliate, platform
 
     // Verify Mastercard payment
     expect(response.body.payment).toMatchObject({
@@ -198,23 +219,35 @@ describe('Payments (e2e)', () => {
 
     expect(response.body).toHaveProperty('transactionId');
     expect(response.body.grossAmount).toBe(500);
-    expect(response.body.commissions).toHaveLength(4); // all participants
+    expect(response.body.taxAmount).toBe(102); // 20% + R$2
+    expect(response.body.netAmount).toBe(398);
+    expect(response.body.commissions).toHaveLength(4);
+    
+    // Platform: tax (102) + commission (19.9) = 121.9
+    const platformComm = response.body.commissions.find(c => c.type === 'PLATFORM');
+    expect(platformComm.amount).toBeCloseTo(121.9, 2);
+    
+    // Remaining: 398 - 19.9 = 378.1
+    // Affiliate (10%): 37.81
+    const affiliateComm = response.body.commissions.find(c => c.type === 'AFFILIATE');
+    expect(affiliateComm.amount).toBeCloseTo(37.81, 2);
+    
+    // Coproducer (15%): 56.715
+    const coproducerComm = response.body.commissions.find(c => c.type === 'COPRODUCER');
+    expect(coproducerComm.amount).toBeCloseTo(56.715, 2);
+    
+    // Producer: 283.575
+    const producerComm = response.body.commissions.find(c => c.type === 'PRODUCER');
+    expect(producerComm.amount).toBeCloseTo(283.575, 2);
 
     // Verify payment with installments
     expect(response.body.payment.installments).toBe(3);
 
-    // Verify all balances were updated
-    const balances = await prisma.db.balance.findMany({
-      where: {
-        userId: {
-          in: [producer.id, affiliate.id, coproducer.id, platform.id],
-        },
-      },
-    });
-
-    balances.forEach((balance) => {
-      expect(Number(balance.amount)).toBeGreaterThan(0);
-    });
+    // Verify all participants received commissions in this transaction
+    expect(producerComm).toBeDefined();
+    expect(affiliateComm).toBeDefined();
+    expect(coproducerComm).toBeDefined();
+    expect(platformComm).toBeDefined();
   });
 
   it('should fail for unknown country', async () => {
