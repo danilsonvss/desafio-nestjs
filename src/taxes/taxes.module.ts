@@ -1,9 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TaxesService } from './taxes.service';
-import { TaxesController } from './taxes.controller';
+import { TaxesController } from './taxes.controller.js';
+import { TaxesService } from './taxes.service.js';
+import { DatabaseModule } from '../database/database.module.js';
 
 @Module({
+  imports: [DatabaseModule],
+  controllers: [TaxesController],
   providers: [TaxesService],
-  controllers: [TaxesController]
 })
 export class TaxesModule {}
