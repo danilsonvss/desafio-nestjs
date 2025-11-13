@@ -1,0 +1,84 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// --- Domain Models ---
+
+enum Role {
+  PRODUCER
+  AFFILIATE
+  COPRODUCER
+  PLATFORM
+}
+
+enum CommissionType {
+  PRODUCER
+  AFFILIATE
+  COPRODUCER
+  PLATFORM
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      Role     @default(PRODUCER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  balance       Balance?
+  commissions   Commission[]
+}
+
+model Balance {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  amount    Decimal  @default(0.0)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  amount    Decimal
+  country   String
+  createdAt DateTime @default(now())
+
+  commissions Commission[]
+}
+
+model Commission {
+  id            String         @id @default(uuid())
+  transactionId String
+  userId        String
+  type          CommissionType
+  amount        Decimal
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@index([transactionId])
+  @@index([userId])
+}
+
+model TaxConfig {
+  id        String   @id @default(uuid())
+  country   String   @unique
+  rate      Decimal  // percentage e.g., 0.20 for 20%
+  fixedFee  Decimal? // optional fixed per-transaction fee
+  updatedAt DateTime @updatedAt
+}
+
