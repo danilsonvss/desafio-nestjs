@@ -6,16 +6,28 @@ $ npm install
 
 ## Database Setup
 
+### Via Docker (Recomendado)
+
 ```bash
 # Generate Prisma client, push schema, and seed initial data
+$ npm run db:setup:docker
+
+# Or run seed separately
+$ npm run prisma:seed:docker
+```
+
+### Localmente
+
+```bash
+# Requer npm install antes
 $ npm run db:setup
 ```
 
-This will:
-- Generate Prisma Client
-- Create database tables
-- Seed tax configs for BR (20% + R$2) and US (15% + $1.50)
-- Create test users (producer, affiliate, coproducer, platform)
+Isso irá:
+- Gerar Prisma Client
+- Criar tabelas no banco
+- Popular tax configs para BR (20% + R$2) e US (15% + $1.50)
+- Criar usuários de teste (producer, affiliate, coproducer, platform)
 
 ## Rodar localmente Docker (Development)
 
@@ -34,9 +46,10 @@ docker compose logs -f app
 ```
 
 - App: http://localhost:3000
+- Swagger: http://localhost:3000/api
 - Database: `postgres://postgres:postgres@localhost:5432/desafio`
-- Hot reload is enabled via `npm run start:dev` inside the container.
-- Database is automatically seeded on first start.
+- Hot reload habilitado via `npm run start:dev` dentro do container
+- **Nota:** Seeds não rodam automaticamente. Execute `npm run db:setup:docker` após o primeiro start
 
 To stop everything:
 
@@ -60,24 +73,26 @@ npm run start:dev
 ## Run tests
 
 ```bash
-# unit tests (40 tests passing)
+# testes unitários (40 testes)
 $ npm run test
 
-# e2e tests (24 tests passing)
+# testes e2e (24 testes)
 $ npm run test:e2e
 
-# or run e2e tests via Docker
+# rodar testes e2e via Docker (recomendado)
 $ npm run test:e2e:docker
 
-# unit tests with coverage
+# cobertura de testes
 $ npm run test:cov
 
-# watch mode
+# modo watch
 $ npm run test:watch
 ```
 
 **Cobertura de Testes:**
-- ✅ 40 testes unitários passando (14 test suites)
+- ✅ 40 testes unitários (14 test suites)
+- ✅ 24 testes e2e (4 test suites)
+- ✅ Total: 64 testes passando
 - ✅ 24 testes e2e passando (4 test suites)  
 - ✅ 61.68% de cobertura de código
 - ✅ Todos os endpoints e funcionalidades testados
