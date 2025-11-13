@@ -8,23 +8,28 @@ import {
 } from '@nestjs/swagger';
 import { UsersService } from './users.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { RolesGuard } from '../auth/roles.guard.js';
+import { Roles } from '../auth/roles.decorator.js';
+import { Role } from '../auth/dto/register.dto.js';
 import { UserResponseDto } from './dto/user-response.dto.js';
 
 @ApiTags('users')
 @Controller('users')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.PLATFORM)
 @ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all users' })
+  @ApiOperation({ summary: 'Get all users (platform only)' })
   @ApiResponse({
     status: 200,
     description: 'List of all users',
     type: [UserResponseDto],
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - requires PLATFORM role' })
   async findAll() {
     const users = await this.usersService.findAll();
     return users.map((user) => ({
@@ -38,7 +43,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get user by ID with recent commissions' })
+  @ApiOperation({ summary: 'Get user by ID with recent commissions (platform only)' })
   @ApiParam({
     name: 'id',
     description: 'User ID',
@@ -50,6 +55,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - requires PLATFORM role' })
   async findOne(@Param('id') id: string) {
     const user = await this.usersService.findOne(id);
 

@@ -8,6 +8,9 @@ import {
 } from '@nestjs/swagger';
 import { BalancesService } from './balances.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { RolesGuard } from '../auth/roles.guard.js';
+import { Roles } from '../auth/roles.decorator.js';
+import { Role } from '../auth/dto/register.dto.js';
 import { CurrentUser } from '../auth/current-user.decorator.js';
 
 @ApiTags('balances')
@@ -18,12 +21,15 @@ export class BalancesController {
   constructor(private readonly balancesService: BalancesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all user balances (admin)' })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PLATFORM)
+  @ApiOperation({ summary: 'Get all user balances (platform only)' })
   @ApiResponse({
     status: 200,
     description: 'List of all balances ordered by amount',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - requires PLATFORM role' })
   async findAll() {
     const balances = await this.balancesService.findAll();
     return balances.map((balance) => ({

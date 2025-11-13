@@ -81,14 +81,14 @@ Quando a aplicação estiver rodando, acesse a documentação Swagger em:
 ### Autenticação
 - `POST /auth/register` - Registrar novo usuário
 - `POST /auth/login` - Login (retorna JWT token)
-- `GET /auth/profile` - Obter perfil do usuário autenticado (requer Bearer token)
+- `GET /auth/profile` - Obter perfil do usuário autenticado 🔒
 
-### Usuários 🔒
+### Usuários 🔒🛡️
 - `GET /users` - Listar todos os usuários com saldos
 - `GET /users/:id` - Obter detalhes do usuário com comissões recentes
 
 ### Saldos (Balances) 🔒
-- `GET /balances` - Listar todos os saldos ordenados por valor
+- `GET /balances` - Listar todos os saldos ordenados por valor 🛡️
 - `GET /balances/me` - Obter saldo do usuário autenticado
 - `GET /balances/user/:userId` - Obter saldo por ID do usuário
 
@@ -96,20 +96,22 @@ Quando a aplicação estiver rodando, acesse a documentação Swagger em:
 - `GET /taxes` - Listar todas as configurações de taxas (público)
 - `GET /taxes/country/:country` - Obter taxa por código do país (público)
 - `GET /taxes/:id` - Obter taxa por ID (público)
-- `POST /taxes` - Criar configuração de taxa 🔒
-- `PUT /taxes/:id` - Atualizar configuração de taxa 🔒
-- `DELETE /taxes/:id` - Remover configuração de taxa 🔒
+- `POST /taxes` - Criar configuração de taxa 🔒🛡️
+- `PUT /taxes/:id` - Atualizar configuração de taxa 🔒🛡️
+- `DELETE /taxes/:id` - Remover configuração de taxa 🔒🛡️
 
 ### Pagamentos
 - `POST /payments` - Processar venda com cálculo de taxas e comissões
 
-🔒 = Requer autenticação (Bearer token)
+**Legenda:**
+- 🔒 = Requer autenticação (Bearer token)
+- 🛡️ = Requer role PLATFORM (administrador)
 
 ### Usuários de Teste (senha: `password123`)
-- `producer@test.com` - Produtor
-- `affiliate@test.com` - Afiliado
-- `coproducer@test.com` - Coprodutor
-- `platform@test.com` - Plataforma
+- `producer@test.com` - Produtor (role: PRODUCER)
+- `affiliate@test.com` - Afiliado (role: AFFILIATE)
+- `coproducer@test.com` - Coprodutor (role: COPRODUCER)
+- `platform@test.com` - Plataforma (role: PLATFORM) - **Acesso administrativo**
 
 ## Notas Técnicas
 

@@ -17,6 +17,9 @@ import {
 } from '@nestjs/swagger';
 import { TaxesService } from './taxes.service.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { RolesGuard } from '../auth/roles.guard.js';
+import { Roles } from '../auth/roles.decorator.js';
+import { Role } from '../auth/dto/register.dto.js';
 import { CreateTaxConfigDto } from './dto/create-tax-config.dto.js';
 import { UpdateTaxConfigDto } from './dto/update-tax-config.dto.js';
 
@@ -88,15 +91,17 @@ export class TaxesController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PLATFORM)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create new tax configuration (admin only)' })
+  @ApiOperation({ summary: 'Create new tax configuration (platform only)' })
   @ApiResponse({
     status: 201,
     description: 'Tax configuration created successfully',
   })
   @ApiResponse({ status: 409, description: 'Tax configuration already exists' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - requires PLATFORM role' })
   async create(@Body() dto: CreateTaxConfigDto) {
     const config = await this.taxesService.create(dto);
     return {
@@ -109,9 +114,10 @@ export class TaxesController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PLATFORM)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update tax configuration (admin only)' })
+  @ApiOperation({ summary: 'Update tax configuration (platform only)' })
   @ApiParam({
     name: 'id',
     description: 'Tax configuration ID',
@@ -122,6 +128,7 @@ export class TaxesController {
   })
   @ApiResponse({ status: 404, description: 'Tax configuration not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - requires PLATFORM role' })
   async update(@Param('id') id: string, @Body() dto: UpdateTaxConfigDto) {
     const config = await this.taxesService.update(id, dto);
     return {
@@ -134,9 +141,10 @@ export class TaxesController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.PLATFORM)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Delete tax configuration (admin only)' })
+  @ApiOperation({ summary: 'Delete tax configuration (platform only)' })
   @ApiParam({
     name: 'id',
     description: 'Tax configuration ID',
@@ -147,6 +155,7 @@ export class TaxesController {
   })
   @ApiResponse({ status: 404, description: 'Tax configuration not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden - requires PLATFORM role' })
   async remove(@Param('id') id: string) {
     await this.taxesService.remove(id);
     return { message: 'Tax configuration deleted successfully' };
