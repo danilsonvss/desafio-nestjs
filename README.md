@@ -1,104 +1,150 @@
-## Instalação
+# Desafio NestJS - Payment API
+
+API REST para processamento de pagamentos com simulação de gateway de cartão, cálculo de taxas, comissões e gestão de saldos.
+
+## 🚀 Quick Start (Docker)
 
 ```bash
-$ npm install
-```
-
-## Database Setup
-
-### Via Docker (Recomendado)
-
-```bash
-# Generate Prisma client, push schema, and seed initial data
-$ npm run db:setup:docker
-
-# Or run seed separately
-$ npm run prisma:seed:docker
-```
-
-### Localmente
-
-```bash
-# Requer npm install antes
-$ npm run db:setup
-```
-
-Isso irá:
-- Gerar Prisma Client
-- Criar tabelas no banco
-- Popular tax configs para BR (20% + R$2) e US (15% + $1.50)
-- Criar usuários de teste (producer, affiliate, coproducer, platform)
-
-## Rodar localmente Docker (Development)
-
-```bash
-# 1) Create your env file
+# 1. Clonar e configurar ambiente
+git clone <repo-url>
+cd desafio-nestjs
 cp .env.example .env
 
-# 2) Build images
-docker compose build
-
-# 3) Start services (app + Postgres)
+# 2. Subir containers (Postgres + App)
 docker compose up -d
 
-# 4) Follow logs
+# 3. Popular banco com dados iniciais
+npm run db:setup:docker
+
+# 4. Acessar aplicação
+# App: http://localhost:3000
+# Swagger: http://localhost:3000/api
+```
+
+## 📋 Pré-requisitos
+
+- **Docker & Docker Compose** (recomendado)
+- Ou: Node.js 20+ e PostgreSQL 16+ (desenvolvimento local)
+
+## 🐳 Setup com Docker (Recomendado)
+
+### 1. Configuração Inicial
+
+```bash
+# Copiar arquivo de ambiente
+cp .env.example .env
+
+# Construir imagens
+docker compose build
+
+# Iniciar serviços
+docker compose up -d
+```
+
+### 2. Configurar Banco de Dados
+
+```bash
+# Rodar migrations e seeds (IMPORTANTE: executar após primeiro start)
+npm run db:setup:docker
+
+# Ou executar separadamente:
+# npm run prisma:seed:docker
+```
+
+**O que o seed cria:**
+- Tax configs para BR (20% + R$2) e US (15% + $1.50)
+- Usuários de teste: producer, affiliate, coproducer, platform (senha: `password123`)
+
+### 3. Verificar Logs
+
+```bash
 docker compose logs -f app
 ```
 
-- App: http://localhost:3000
-- Swagger: http://localhost:3000/api
-- Database: `postgres://postgres:postgres@localhost:5432/desafio`
-- Hot reload habilitado via `npm run start:dev` dentro do container
-- **Nota:** Seeds não rodam automaticamente. Execute `npm run db:setup:docker` após o primeiro start
+### URLs Disponíveis
+- **API:** http://localhost:3000
+- **Swagger Docs:** http://localhost:3000/api
+- **Database:** `postgres://postgres:postgres@localhost:5432/desafio`
 
-To stop everything:
+### Comandos Úteis
 
 ```bash
+# Parar containers
 docker compose down
+
+# Reiniciar app
+docker compose restart app
+
+# Rodar testes e2e
+npm run test:e2e:docker
+
+# Acessar shell do container
+docker compose exec app sh
+
+# Ver logs
+docker compose logs -f app
 ```
 
-## Local Development (without Docker)
+## 💻 Setup Local (Sem Docker)
+
+### 1. Configurar Banco de Dados
+
+Certifique-se de ter PostgreSQL 16+ rodando localmente.
 
 ```bash
-# 1) Setup database URL in .env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/desafio?schema=public"
+# Copiar .env e ajustar DATABASE_URL se necessário
+cp .env.example .env
+# Editar .env com sua connection string do Postgres
+```
 
-# 2) Setup database
+### 2. Instalar Dependências e Configurar Banco
+
+```bash
+# Instalar dependências
+npm install
+
+# Gerar Prisma Client + Migrations + Seeds
 npm run db:setup
+```
 
-# 3) Start development server
+### 3. Iniciar Servidor
+
+```bash
 npm run start:dev
 ```
 
-## Run tests
+Aplicação rodará em: http://localhost:3000
+
+## 🧪 Testes
+
+## 🧪 Testes
 
 ```bash
 # testes unitários (40 testes)
-$ npm run test
+npm run test
 
-# testes e2e (24 testes)
-$ npm run test:e2e
+# testes e2e (24 testes)  
+npm run test:e2e
 
 # rodar testes e2e via Docker (recomendado)
-$ npm run test:e2e:docker
+npm run test:e2e:docker
 
 # cobertura de testes
-$ npm run test:cov
+npm run test:cov
 
 # modo watch
-$ npm run test:watch
+npm run test:watch
 ```
 
 **Cobertura de Testes:**
 - ✅ 40 testes unitários (14 test suites)
 - ✅ 24 testes e2e (4 test suites)
 - ✅ Total: 64 testes passando
-- ✅ 24 testes e2e passando (4 test suites)  
 - ✅ 61.68% de cobertura de código
-- ✅ Todos os endpoints e funcionalidades testados
 
+---
 
-## API Documentation
+## 📚 API Documentation
 
 Quando a aplicação estiver rodando, acesse a documentação Swagger em:
 - http://localhost:3000/api
@@ -218,11 +264,17 @@ Consulte o arquivo `docs/business-rules.md` para documentação completa das reg
 - Exemplos práticos com valores reais
 
 ### Prisma Client
-O projeto usa um output customizado para o Prisma Client em `generated/prisma/`. Após qualquer alteração no schema:
+
+O projeto usa Prisma Client padrão (`@prisma/client`). Após qualquer alteração no schema:
 
 ```bash
+# Local
 npx prisma generate
 npx prisma db push
+
+# Docker
+docker compose exec app npx prisma generate
+docker compose exec app npx prisma db push
 ```
 
-No Docker, isso é feito automaticamente no entrypoint.
+No Docker, o Prisma Client é gerado automaticamente no entrypoint.
