@@ -20,6 +20,8 @@ async function bootstrap() {
     .setTitle('Desafio NestJS API')
     .setDescription('REST API for sales, taxes, commissions, and balance management')
     .setVersion('1.0')
+    .addBearerAuth()
+    .addTag('auth', 'Authentication and authorization')
     .addTag('payments', 'Payment processing endpoints')
     .addTag('users', 'User management')
     .addTag('balances', 'Balance queries')

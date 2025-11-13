@@ -9,6 +9,11 @@ async function getPrismaClient() {
   }
 }
 
+async function hashPassword(password: string): Promise<string> {
+  const bcrypt = await import('bcrypt');
+  return bcrypt.hash(password, 10);
+}
+
 async function main(prisma: any) {
   console.log('Seeding database...');
 
@@ -35,6 +40,9 @@ async function main(prisma: any) {
 
   console.log('Tax configs seeded: BR, US');
 
+  // Hash default password for test users
+  const defaultPassword = await hashPassword('password123');
+
   // Seed test users (producer, affiliate, coproducer, platform)
   const producer = await prisma.user.upsert({
     where: { email: 'producer@test.com' },
@@ -42,6 +50,7 @@ async function main(prisma: any) {
     create: {
       email: 'producer@test.com',
       name: 'Test Producer',
+      password: defaultPassword,
       role: 'PRODUCER',
       balance: {
         create: { amount: 0 },
@@ -55,6 +64,7 @@ async function main(prisma: any) {
     create: {
       email: 'affiliate@test.com',
       name: 'Test Affiliate',
+      password: defaultPassword,
       role: 'AFFILIATE',
       balance: {
         create: { amount: 0 },
@@ -68,6 +78,7 @@ async function main(prisma: any) {
     create: {
       email: 'coproducer@test.com',
       name: 'Test Coproducer',
+      password: defaultPassword,
       role: 'COPRODUCER',
       balance: {
         create: { amount: 0 },
@@ -81,6 +92,7 @@ async function main(prisma: any) {
     create: {
       email: 'platform@test.com',
       name: 'Platform',
+      password: defaultPassword,
       role: 'PLATFORM',
       balance: {
         create: { amount: 0 },
@@ -88,7 +100,7 @@ async function main(prisma: any) {
     },
   });
 
-  console.log('Test users seeded:', {
+  console.log('Test users seeded (password: password123):', {
     producer: producer.email,
     affiliate: affiliate.email,
     coproducer: coproducer.email,
