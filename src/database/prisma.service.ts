@@ -11,6 +11,7 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     // Lazy-load Prisma client to avoid build-time dependency on generated path
     const mod =
+      // @ts-ignore - dynamic import path resolved at runtime
       (await import('generated/prisma').catch(() => null)) ||
       (await import('@prisma/client'));
     this.client = new (mod as any).PrismaClient();
