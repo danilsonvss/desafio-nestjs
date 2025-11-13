@@ -26,21 +26,11 @@ if [ -f prisma/schema.prisma ]; then
   echo "Generating Prisma client..."
   npx prisma generate || true
   
-  # Copy package.json to generated folder for ESM support
-  echo '{"type": "module"}' > generated/package.json
-  
   if [ -n "${DATABASE_URL}" ]; then
     echo "Pushing Prisma schema to database..."
     npx prisma db push || true
   fi
 fi
-
-# Ensure dist/generated/package.json exists for runtime
-mkdir -p dist/generated
-echo '{"type": "module"}' > dist/generated/package.json
-
-# Start background watcher for package.json
-bash /watch-prisma-pkg.sh &
 
 echo "Starting NestJS in watch mode..."
 exec npm run start:dev

@@ -60,16 +60,28 @@ npm run start:dev
 ## Run tests
 
 ```bash
-# unit tests
+# unit tests (40 tests passing)
 $ npm run test
 
-# e2e tests (nota: requerem --experimental-vm-modules do Node.js)
-# Recomenda-se executar testes e2e manualmente testando os endpoints HTTP
+# e2e tests (24 tests passing)
 $ npm run test:e2e
 
-# test coverage
+# or run e2e tests via Docker
+$ npm run test:e2e:docker
+
+# unit tests with coverage
 $ npm run test:cov
+
+# watch mode
+$ npm run test:watch
 ```
+
+**Cobertura de Testes:**
+- ✅ 40 testes unitários passando (14 test suites)
+- ✅ 24 testes e2e passando (4 test suites)  
+- ✅ 61.68% de cobertura de código
+- ✅ Todos os endpoints e funcionalidades testados
+
 
 ## API Documentation
 

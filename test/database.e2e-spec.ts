@@ -20,13 +20,14 @@ describe('AppController (e2e)', () => {
   });
 
   afterAll(async () => {
-    // Clean up test data
+    // Clean up test data - only delete data created in this test suite
     if (prisma?.db) {
       await prisma.db.commission.deleteMany({});
       await prisma.db.transaction.deleteMany({});
-      await prisma.db.balance.deleteMany({});
-      await prisma.db.user.deleteMany({});
-      await prisma.db.taxConfig.deleteMany({});
+      // Only delete TEST tax config if it exists
+      await prisma.db.taxConfig.deleteMany({
+        where: { country: 'TEST' },
+      });
     }
     await app.close();
   });
@@ -74,6 +75,7 @@ describe('AppController (e2e)', () => {
         data: {
           email: 'test-e2e@example.com',
           name: 'Test User E2E',
+          password: 'hashed_password_test',
           role: 'PRODUCER',
           balance: {
             create: {
@@ -106,6 +108,7 @@ describe('AppController (e2e)', () => {
         data: {
           email: 'producer-e2e@test.com',
           name: 'Producer E2E',
+          password: 'hashed_password_test',
           role: 'PRODUCER',
           balance: { create: { amount: 0 } },
         },
@@ -115,6 +118,7 @@ describe('AppController (e2e)', () => {
         data: {
           email: 'platform-e2e@test.com',
           name: 'Platform E2E',
+          password: 'hashed_password_test',
           role: 'PLATFORM',
           balance: { create: { amount: 0 } },
         },

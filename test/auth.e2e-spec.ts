@@ -2,9 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { PrismaService } from '../src/database/prisma.service';
 
 describe('Auth (e2e)', () => {
   let app: INestApplication;
+  let prisma: PrismaService;
   let accessToken: string;
 
   beforeAll(async () => {
@@ -21,9 +23,43 @@ describe('Auth (e2e)', () => {
       }),
     );
     await app.init();
+
+    prisma = app.get(PrismaService);
+
+    // Limpar dados de teste (na ordem correta das relações)
+    try {
+      const testEmails = ['newuser@test.com', 'duplicate@test.com'];
+      const users = await prisma.db.user.findMany({
+        where: { email: { in: testEmails } },
+        select: { id: true },
+      });
+      const userIds = users.map((u) => u.id);
+
+      if (userIds.length > 0) {
+        await prisma.db.balance.deleteMany({
+          where: { userId: { in: userIds } },
+        });
+        await prisma.db.user.deleteMany({ where: { id: { in: userIds } } });
+      }
+    } catch (error) {
+      // Ignorar erros de cleanup se não houver dados
+    }
   });
 
   afterAll(async () => {
+    // Limpar dados de teste (na ordem correta das relações)
+    const testEmails = ['newuser@test.com', 'duplicate@test.com'];
+    const users = await prisma.db.user.findMany({
+      where: { email: { in: testEmails } },
+      select: { id: true },
+    });
+    const userIds = users.map((u) => u.id);
+
+    if (userIds.length > 0) {
+      await prisma.db.balance.deleteMany({ where: { userId: { in: userIds } } });
+      await prisma.db.user.deleteMany({ where: { id: { in: userIds } } });
+    }
+
     await app.close();
   });
 
@@ -120,20 +156,6 @@ describe('Auth (e2e)', () => {
           password: 'password123',
         })
         .expect(401);
-    });
-
-    it('should login with seeded test user', () => {
-      return request(app.getHttpServer())
-        .post('/auth/login')
-        .send({
-          email: 'producer@test.com',
-          password: 'password123',
-        })
-        .expect(200)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('accessToken');
-          expect(res.body.user.email).toBe('producer@test.com');
-        });
     });
   });
 

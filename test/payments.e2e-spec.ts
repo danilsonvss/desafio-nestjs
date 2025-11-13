@@ -47,6 +47,7 @@ describe('Payments (e2e)', () => {
       data: {
         email: 'producer-payment@test.com',
         name: 'Producer',
+        password: 'hashed_password_test',
         role: 'PRODUCER',
         balance: { create: { amount: 0 } },
       },
@@ -56,6 +57,7 @@ describe('Payments (e2e)', () => {
       data: {
         email: 'affiliate-payment@test.com',
         name: 'Affiliate',
+        password: 'hashed_password_test',
         role: 'AFFILIATE',
         balance: { create: { amount: 0 } },
       },
@@ -65,6 +67,7 @@ describe('Payments (e2e)', () => {
       data: {
         email: 'coproducer-payment@test.com',
         name: 'Coproducer',
+        password: 'hashed_password_test',
         role: 'COPRODUCER',
         balance: { create: { amount: 0 } },
       },
@@ -74,6 +77,7 @@ describe('Payments (e2e)', () => {
       data: {
         email: 'platform-payment@test.com',
         name: 'Platform',
+        password: 'hashed_password_test',
         role: 'PLATFORM',
         balance: { create: { amount: 0 } },
       },
