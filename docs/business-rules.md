@@ -15,20 +15,33 @@ Valor Bruto → (-) Taxas → Valor Líquido → (-) Comissões → Saldos
 
 ### 1.3 Distribuição de Comissões (baseado no valor líquido)
 
+**A plataforma recebe:**
+- **Taxa total** (tax amount) que foi deduzida do valor bruto
+- **Comissão de 5%** sobre o valor líquido
+
+**Outros participantes recebem % do valor líquido:**
+
 | Participante | Percentual | Condição |
 |-------------|-----------|----------|
-| Plataforma  | 5%        | Sempre aplicado |
+| Plataforma  | Taxa + 5% comissão | Sempre aplicado |
 | Afiliado    | 10%       | Se `affiliateId` informado |
 | Coprodutor  | 15%       | Se `coproducerId` informado |
-| Produtor    | Restante  | Recebe o que sobra após descontos |
+| Produtor    | Restante  | Recebe o que sobra após comissões |
 
-**Exemplo com todos os participantes:**
+**Exemplo BR com todos os participantes (R$ 500):**
 ```
-Valor líquido: R$ 100,00
-- Plataforma: R$ 5,00 (5%)
-- Afiliado: R$ 10,00 (10% de 100)
-- Coprodutor: R$ 15,00 (15% de 100)
-- Produtor: R$ 70,00 (100 - 5 - 10 - 15)
+Valor bruto: R$ 500,00
+Taxa (20% + R$ 2): R$ 102,00
+Valor líquido: R$ 398,00
+
+Distribuição:
+- Plataforma: R$ 102,00 (taxa) + R$ 19,90 (5% comissão) = R$ 121,90
+- Restante para distribuir: R$ 378,10
+  - Afiliado: R$ 37,81 (10%)
+  - Coprodutor: R$ 56,72 (15%)
+  - Produtor: R$ 283,57 (restante)
+
+Total distribuído: R$ 121,90 + R$ 37,81 + R$ 56,72 + R$ 283,57 = R$ 500,00 ✓
 ```
 
 ### 1.4 Atomicidade das Transações
@@ -50,11 +63,11 @@ Valor líquido: R$ 100,00
 
 ### 2.2 Países Pré-configurados
 - **BR (Brasil)**: 
-  - Rate: 0.065 (6.5%)
-  - Fixed Fee: 0.39 (R$ 0,39)
+  - Rate: 0.20 (20%)
+  - Fixed Fee: 2.00 (R$ 2,00)
 - **US (Estados Unidos)**:
-  - Rate: 0.029 (2.9%)
-  - Fixed Fee: 0.30 (US$ 0,30)
+  - Rate: 0.15 (15%)
+  - Fixed Fee: 1.50 (US$ 1,50)
 
 ### 2.3 Regras de Validação
 - País deve existir na configuração antes do processamento
@@ -133,8 +146,9 @@ Valor líquido: R$ 100,00
 
 ### 6.2 Consistência de Dados
 ✅ Transação só é salva se todos os saldos forem atualizados
-✅ Comissões sempre somam exatamente o valor líquido
+✅ Comissões + taxas sempre somam exatamente o valor bruto
 ✅ Cada comissão tem um tipo correspondente ao papel do usuário
+✅ Plataforma recebe taxa + comissão (nunca apenas comissão)
 
 ## 7. Fluxo Completo de Venda
 
@@ -156,14 +170,58 @@ graph TD
     N --> O[Retornar resultado]
 ```
 
-## 8. Exemplo Prático
+## 8. Exemplos Práticos
 
-### Cenário: Venda de R$ 100,00 no Brasil
+### Cenário 1: Venda de R$ 100,00 no Brasil (apenas produtor)
 
 **Entrada:**
 ```json
 {
   "amount": 100.00,
+  "country": "BR",
+  "producerId": "uuid-producer"
+}
+```
+
+**Processamento:**
+
+1. **Taxas (Brasil: 20% + R$ 2)**
+   - Taxa variável: 100 × 0.20 = R$ 20.00
+   - Taxa fixa: R$ 2.00
+   - Total taxas: R$ 22.00
+   - Valor líquido: 100 - 22 = **R$ 78.00**
+
+2. **Comissões**
+   - Plataforma: R$ 22.00 (taxa) + R$ 3.90 (5% de 78) = **R$ 25.90**
+   - Produtor: 78.00 - 3.90 = **R$ 74.10**
+   - Total: 25.90 + 74.10 = **R$ 100.00** ✓
+
+3. **Atualização de Saldos**
+   - ✅ Balance do Produtor: +R$ 74.10
+   - ✅ Balance da Plataforma: +R$ 25.90
+
+**Saída:**
+```json
+{
+  "transactionId": "uuid-transaction",
+  "grossAmount": 100.00,
+  "taxAmount": 22.00,
+  "netAmount": 78.00,
+  "commissions": [
+    { "type": "PRODUCER", "amount": 74.10 },
+    { "type": "PLATFORM", "amount": 25.90 }
+  ]
+}
+```
+
+---
+
+### Cenário 2: Venda de R$ 500,00 com todos os participantes
+
+**Entrada:**
+```json
+{
+  "amount": 500.00,
   "country": "BR",
   "producerId": "uuid-producer",
   "affiliateId": "uuid-affiliate",
@@ -173,37 +231,41 @@ graph TD
 
 **Processamento:**
 
-1. **Taxas (Brasil: 6.5% + R$ 0.39)**
-   - Taxa variável: 100 × 0.065 = R$ 6.50
-   - Taxa fixa: R$ 0.39
-   - Total taxas: R$ 6.89
-   - Valor líquido: 100 - 6.89 = **R$ 93.11**
+1. **Taxas (Brasil: 20% + R$ 2)**
+   - Taxa variável: 500 × 0.20 = R$ 100.00
+   - Taxa fixa: R$ 2.00
+   - Total taxas: R$ 102.00
+   - Valor líquido: 500 - 102 = **R$ 398.00**
 
-2. **Comissões (sobre R$ 93.11)**
-   - Plataforma (5%): R$ 4.66
-   - Afiliado (10%): R$ 9.31
-   - Coprodutor (15%): R$ 13.97
-   - Produtor (restante): 93.11 - 4.66 - 9.31 - 13.97 = **R$ 65.17**
+2. **Comissões (sobre R$ 398.00)**
+   - Plataforma: R$ 102.00 (taxa) + R$ 19.90 (5%) = **R$ 121.90**
+   - Restante: 398.00 - 19.90 = R$ 378.10
+   - Afiliado (10%): R$ 37.81
+   - Coprodutor (15%): R$ 56.72
+   - Produtor (restante): 378.10 - 37.81 - 56.72 = **R$ 283.57**
+   - Total: 121.90 + 37.81 + 56.72 + 283.57 = **R$ 500.00** ✓
 
 3. **Atualização de Saldos**
-   - ✅ Balance do Produtor: +R$ 65.17
-   - ✅ Balance do Afiliado: +R$ 9.31
-   - ✅ Balance do Coprodutor: +R$ 13.97
-   - ✅ Balance da Plataforma: +R$ 4.66
+   - ✅ Balance do Produtor: +R$ 283.57
+   - ✅ Balance do Afiliado: +R$ 37.81
+   - ✅ Balance do Coprodutor: +R$ 56.72
+   - ✅ Balance da Plataforma: +R$ 121.90
 
 **Saída:**
 ```json
 {
   "transactionId": "uuid-transaction",
-  "grossAmount": 100.00,
-  "taxAmount": 6.89,
-  "netAmount": 93.11,
+  "grossAmount": 500.00,
+  "taxAmount": 102.00,
+  "netAmount": 398.00,
   "commissions": [
-    { "type": "PRODUCER", "amount": 65.17 },
-    { "type": "PLATFORM", "amount": 4.66 },
-    { "type": "AFFILIATE", "amount": 9.31 },
-    { "type": "COPRODUCER", "amount": 13.97 }
+    { "type": "PRODUCER", "amount": 283.57 },
+    { "type": "PLATFORM", "amount": 121.90 },
+    { "type": "AFFILIATE", "amount": 37.81 },
+    { "type": "COPRODUCER", "amount": 56.72 }
   ]
+}
+```
 }
 ```
 

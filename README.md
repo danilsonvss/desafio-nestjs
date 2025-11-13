@@ -205,18 +205,16 @@ Quando a aplicação estiver rodando, acesse a documentação Swagger em:
 - ✅ Parcelas (1-12)
 - ✅ Detecção automática da bandeira do cartão
 
-**Resposta do pagamento:**
+**Resposta do pagamento (exemplo BR - R$ 100):**
 ```json
 {
   "transactionId": "uuid-da-transacao",
   "grossAmount": 100.00,
-  "taxAmount": 6.89,
-  "netAmount": 93.11,
+  "taxAmount": 22.00,
+  "netAmount": 78.00,
   "commissions": [
-    { "type": "PRODUCER", "amount": 65.17 },
-    { "type": "PLATFORM", "amount": 4.66 },
-    { "type": "AFFILIATE", "amount": 9.31 },
-    { "type": "COPRODUCER", "amount": 13.97 }
+    { "type": "PRODUCER", "amount": 74.10 },
+    { "type": "PLATFORM", "amount": 25.90 }
   ],
   "payment": {
     "approved": true,
@@ -227,6 +225,13 @@ Quando a aplicação estiver rodando, acesse a documentação Swagger em:
   }
 }
 ```
+
+**Como funcionam os cálculos:**
+- **Taxas (BR):** 20% + R$ 2 fixo = R$ 22,00
+- **Líquido:** R$ 100 - R$ 22 = R$ 78,00
+- **Plataforma:** R$ 22 (taxa) + R$ 3,90 (5% comissão) = **R$ 25,90**
+- **Produtor:** R$ 78 - R$ 3,90 = **R$ 74,10**
+- Total distribuído: R$ 100,00 ✓
 
 **Legenda:**
 - 🔒 = Requer autenticação (Bearer token)
@@ -256,12 +261,24 @@ O sistema implementa um gateway de pagamento simulado que:
 - Valores monetários armazenados como Decimal no banco
 
 ### Regras de Negócio Implementadas
-Consulte o arquivo `docs/business-rules.md` para documentação completa das regras de negócio, incluindo:
-- Fluxo completo de processamento de vendas
-- Cálculo de taxas por país
-- Distribuição de comissões
-- Validações e controles de acesso
-- Exemplos práticos com valores reais
+
+**Distribuição de valores em uma venda:**
+1. Valor bruto → Deduz taxas → Valor líquido
+2. Do valor líquido, calcula comissões (5%, 10%, 15%)
+3. Plataforma recebe: **taxa completa + comissão de 5%**
+4. Produtor recebe o restante após todas as comissões
+
+**Exemplo completo (R$ 500 com todos participantes):**
+- Bruto: R$ 500
+- Taxa BR (20% + R$ 2): R$ 102
+- Líquido: R$ 398
+- Plataforma: R$ 102 (taxa) + R$ 19,90 (5%) = R$ 121,90
+- Afiliado (10%): R$ 37,81
+- Coprodutor (15%): R$ 56,72
+- Produtor: R$ 283,57
+- **Total:** R$ 500 ✓
+
+Consulte `docs/business-rules.md` para documentação completa com mais exemplos e validações.
 
 ### Prisma Client
 
